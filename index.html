@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>评分 vs TRIN 每日复盘</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#121212;color:#eee;font-family:Microsoft YaHei;padding:20px;max-width:1200px;margin:0 auto}
+.title{text-align:center;font-size:22px;margin-bottom:10px;color:#fff}
+.subtitle{text-align:center;font-size:14px;color:#aaa;margin-bottom:20px}
+.info-box{background:#222;padding:12px;border-radius:6px;margin-bottom:16px;color:#ccc;font-size:14px;line-height:1.6}
+#canvasWrap{height:520px;background:#0f0f0f;padding:16px;border-radius:8px}
+.ctrl{margin-top:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+button{padding:8px 16px;background:#2d7ff9;color:#fff;border:none;border-radius:4px;cursor:pointer}
+button:disabled{background:#444}
+</style>
+</head>
+<body>
+<div class="title">评分 & TRIN 每日复盘</div>
+<div class="subtitle" id="subtitle">加载中…</div>
+<div class="info-box" id="info">正在读取最新数据…</div>
+<div id="canvasWrap"><canvas id="mainChart"></canvas></div>
+<div class="ctrl">
+  <button id="reloadBtn">重新加载数据</button>
+</div>
+
+<script>
+let chart = null;
+let allData = [];
+function todayStr(){
+  const d = new Date(), p = n => String(n).padStart(2,"0");
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+}
+function setInfo(t){ document.getElementById("info").innerText = t; }
+
+async function loadData(){
+  setInfo("正在加载 data.json …");
+  try{
+    const res = await fetch("./data.json?t=" + Date.now());
+    if(!res.ok) throw new Error("data.json 读取失败");
+    allData = await res.json();
+    if(!Array.isArray(allData) || allData.length === 0) throw new Error("data.json 内容为空");
+    renderChart();
+    setInfo(`✅ 已加载 ${allData.length} 条记录｜最后更新：${allData[allData.length-1].date}`);
+  }catch(e){
+    setInfo("⚠️ " + e.message + "（请确认 data.json 已生成）");
+  }
+}
+
+function renderChart(){
+  const labels = allData.map(r => r.date.slice(5));
+  const scoreData = allData.map(r => r.score);
+  const redRateData = allData.map(r => r.redRate);
+  const trinData = allData.map(r => r.trin);
+  const maxTrin = Math.max(1.6, Math.ceil(Math.max(...trinData.filter(v => v != null)) * 1.15 * 10) / 10);
+  document.getElementById("subtitle").innerText =
+    `${allData[0].date} ~ ${allData[allData.length-1].date}｜沪深A股情绪指标`;
+  const ctx = document.getElementById("mainChart").getContext("2d");
+  if(chart) chart.destroy();
+  chart = new Chart(ctx,{
+    type:"bar",
+    data:{
+      labels,
+      datasets:[
+        { label:"评分", data:scoreData, backgroundColor:"#ff4444", yAxisID:"yLeft", barPercentage:0.6 },
+        { label:"红盘率", type:"line", data:redRateData, borderColor:"#4298ff", pointRadius:5, borderWidth:3, fill:false, yAxisID:"yLeft" },
+        { label:"TRIN", type:"line", data:trinData, borderColor:"#ffdd33", borderDash:[6,4], pointRadius:5, borderWidth:3, fill:false, yAxisID:"yRight" }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:"index", intersect:false },
+      plugins:{
+        legend:{ labels:{ color:"#ddd" } },
+        tooltip:{ callbacks:{ label: c => c.raw == null ? c.dataset.label+"：暂无" : c.dataset.label+"："+c.raw } },
+        annotation:{ annotations:{ trinLine:{ type:"line", yMin:1, yMax:1, yScaleID:"yRight", borderColor:"#ffdd33", borderWidth:2, borderDash:[2,3] } } }
+      },
+      scales:{
+        yLeft:{ type:"linear", position:"left", min:0, max:100, grid:{ color:"#2a2a2a" }, ticks:{ color:"#aaa" }, title:{ display:true, text:"评分 / 红盘率", color:"#aaa" } },
+        yRight:{ type:"linear", position:"right", min:0, max:maxTrin, grid:{ drawOnChartArea:false }, ticks:{ color:"#aaa" }, title:{ display:true, text:"TRIN", color:"#aaa" } }
+      }
+    }
+  });
+}
+
+document.getElementById("reloadBtn").onclick = loadData;
+window.addEventListener("load", loadData);
+</script>
+</body>
+</html>
