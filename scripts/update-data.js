@@ -9,16 +9,42 @@ if (!isWorkday(TODAY)) {
 }
 
 async function fetchQuotes() {
-  const url = "https://push2.eastmoney.com/api/qt/clist/get" +
-    "?pn=1&pz=6000&po=1&np=1&ut=bd1d9ddb04089700cf9c27f6f7426281" +
-    "&fltt=2&invt=2&fid=f3" +
-    "&fs=m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23" +
-    "&fields=f2,f3,f5";
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("HTTP " + res.status);
-  const json = await res.json();
-  if (!json?.data?.diff?.length) throw new Error("接口无行情数据");
-  return json.data.diff;
+  let allDiff = [];
+  let page = 1;
+  const pz = 100; // 每次请求100条，避免被东方财富接口拦截
+
+  while (true) {
+    const url = "https://push2.eastmoney.com/api/qt/clist/get" +
+      `?pn=${page}&pz=${pz}&po=1&np=1&ut=bd1d9ddb04089700cf9c27f6f7426281` +
+      "&fltt=2&invt=2&fid=f3" +
+      "&fs=m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23" +
+      "&fields=f2,f3,f5";
+      
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'Referer': 'https://quote.eastmoney.com/'
+      }
+    });
+    
+    if (!res.ok) break;
+    const json = await res.json();
+    
+    // 如果接口没有返回数据了，说明抓完了
+    if (!json?.data?.diff || json.data.diff.length === 0) break;
+    
+    allDiff = allDiff.concat(json.data.diff);
+    
+    // 如果这一页拿到的不到100条，说明是最后一页了
+    if (json.data.diff.length < pz) break;
+    
+    page++;
+    // 停顿一下，防止请求过快被封IP
+    await new Promise(r => setTimeout(r, 150));
+  }
+  
+  console.log(`📊 成功抓取到 ${allDiff.length} 只股票的数据`);
+  return allDiff;
 }
 
 function compute(quotes) {
