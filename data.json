@@ -1,8 +1,44 @@
 [
-  { "date": "2026-10-22", "redRate": 8.6, "trin": 0.51, "score": 18.2 },
-  { "date": "2026-10-23", "redRate": 80.5, "trin": 0.93, "score": 28.3 },
-  { "date": "2026-10-26", "redRate": 39.9, "trin": 1.08, "score": 25.5 },
-  { "date": "2026-10-27", "redRate": 11.0, "trin": 0.46, "score": 17.9 },
-  { "date": "2026-10-28", "redRate": 71.0, "trin": 0.77, "score": 26.7 },
-  { "date": "2026-10-29", "redRate": 14.0, "trin": 1.42, "score": 14.5 }
+  {
+    "date": "2026-10-22",
+    "redRate": 8.6,
+    "trin": 0.51,
+    "score": 18.2
+  },
+  {
+    "date": "2026-10-23",
+    "redRate": 80.5,
+    "trin": 0.93,
+    "score": 28.3
+  },
+  {
+    "date": "2026-10-26",
+    "redRate": 39.9,
+    "trin": 1.08,
+    "score": 25.5
+  },
+  {
+    "date": "2026-10-27",
+    "redRate": 11,
+    "trin": 0.46,
+    "score": 17.9
+  },
+  {
+    "date": "2026-10-28",
+    "redRate": 71,
+    "trin": 0.77,
+    "score": 26.7
+  },
+  {
+    "date": "2026-10-29",
+    "redRate": 14,
+    "trin": 1.42,
+    "score": 14.5
+  },
+  {
+    "date": "2026-11-03",
+    "redRate": 38.8,
+    "trin": 0.6,
+    "score": 57.4
+  }
 ]
